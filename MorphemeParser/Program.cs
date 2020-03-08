@@ -12,13 +12,18 @@ namespace MorphemeParser
     {
         static void Main(string[] args)
         {
+            Korean();
+        }
+
+        static void Korean()
+        {
             Console.WriteLine("Start processing...\n");
 
             const int NUM_OF_GRAMS = 1;
-            List<Dictionary<string, SentimentData>> dictionary = new List<Dictionary<string, SentimentData>>();
+            List<Dictionary<string, KoreanSentimentData>> dictionary = new List<Dictionary<string, KoreanSentimentData>>();
             for (int z = 0; z < NUM_OF_GRAMS; z++)
             {
-                dictionary.Add(new Dictionary<string, SentimentData>());
+                dictionary.Add(new Dictionary<string, KoreanSentimentData>());
             }
 
             CSVReader polarity = new CSVReader("../../polarity.csv", true);
@@ -37,14 +42,14 @@ namespace MorphemeParser
                     if (count <= NUM_OF_GRAMS && !hasContainSolo)
                     {
                         string word = String.Join(";", c.ToArray());
-                        SentimentData d;
+                        KoreanSentimentData d;
                         if (dictionary[count - 1].ContainsKey(word))
                         {
                             d = dictionary[count - 1][word];
                         }
                         else
                         {
-                            d = new SentimentData(word);
+                            d = new KoreanSentimentData(word);
                         }
                         List<string> instance = polarity.GetRow(i);
                         if (instance[0] != str)
@@ -86,7 +91,7 @@ namespace MorphemeParser
                     if (count <= NUM_OF_GRAMS && !hasContainSolo)
                     {
                         string word = String.Join(";", c.ToArray());
-                        SentimentData d;
+                        KoreanSentimentData d;
                         if (dictionary[count - 1].ContainsKey(word))
                         {
                             d = dictionary[count - 1][word];
@@ -95,7 +100,7 @@ namespace MorphemeParser
                         {
                             Console.WriteLine("Error: inconsistent word with polarity.csv");
                             Console.ReadKey();
-                            d = new SentimentData(word);
+                            d = new KoreanSentimentData(word);
                         }
                         List<string> instance = intensity.GetRow(i);
                         if (instance[0] != str)
@@ -135,7 +140,7 @@ namespace MorphemeParser
                     if (count <= NUM_OF_GRAMS && !hasContainSolo)
                     {
                         string word = String.Join(";", c.ToArray());
-                        SentimentData d;
+                        KoreanSentimentData d;
                         if (dictionary[count - 1].ContainsKey(word))
                         {
                             d = dictionary[count - 1][word];
@@ -144,7 +149,7 @@ namespace MorphemeParser
                         {
                             Console.WriteLine("Error: inconsistent word with polarity.csv");
                             Console.ReadKey();
-                            d = new SentimentData(word);
+                            d = new KoreanSentimentData(word);
                         }
                         List<string> instance = subjectivityType.GetRow(i);
                         if (instance[0] != str)
@@ -187,7 +192,7 @@ namespace MorphemeParser
                     if (count <= NUM_OF_GRAMS && !hasContainSolo)
                     {
                         string word = String.Join(";", c.ToArray());
-                        SentimentData d;
+                        KoreanSentimentData d;
                         if (dictionary[count - 1].ContainsKey(word))
                         {
                             d = dictionary[count - 1][word];
@@ -196,7 +201,7 @@ namespace MorphemeParser
                         {
                             Console.WriteLine("Error: inconsistent word with polarity.csv");
                             Console.ReadKey();
-                            d = new SentimentData(word);
+                            d = new KoreanSentimentData(word);
                         }
                         List<string> instance = subjectivityPolarity.GetRow(i);
                         if (instance[0] != str)
@@ -239,7 +244,7 @@ namespace MorphemeParser
                 }
                 Console.WriteLine("(" + (5 + j) + "/" + (4 + NUM_OF_GRAMS) + ") HangulSentiment" + (j + 1) + ".csv exporting completed");
             }
-            
+
             Console.WriteLine();
             Console.WriteLine("Press any key to terminate.");
             Console.ReadKey();
@@ -289,6 +294,67 @@ namespace MorphemeParser
                 rawWord.Contains("EC;") ||
                 rawWord.Contains("ETN;") ||
                 rawWord.Contains("ETM;");
+        }
+
+        static void English()
+        {
+            Console.WriteLine("Start processing...\n");
+            
+            List<Dictionary<string, KoreanSentimentData>> dictionary = new List<Dictionary<string, KoreanSentimentData>>();
+            for (int z = 0; z < NUM_OF_GRAMS; z++)
+            {
+                dictionary.Add(new Dictionary<string, KoreanSentimentData>());
+            }
+
+            CSVReader polarity = new CSVReader("../../polarity.csv", true);
+            int i = 0;
+            int freq = 0;
+            foreach (string str in polarity.GetColumn(0))
+            {
+                if (CheckPOS(str) && !CheckPOSJosa(str) && !CheckPOSEomiNotInLastPosition(str))
+                {
+                    string a = Hangul.Assemble(str, out bool hasContainSolo, true);
+                    a = TwitterKoreanProcessorCS.Normalize(a);
+                    var b = TwitterKoreanProcessorCS.Tokenize(a);
+                    b = TwitterKoreanProcessorCS.Stem(b);
+                    var c = TwitterKoreanProcessorCS.TokensToStrings(b);
+                    int count = c.Count();
+                    if (count <= NUM_OF_GRAMS && !hasContainSolo)
+                    {
+                        string word = String.Join(";", c.ToArray());
+                        KoreanSentimentData d;
+                        if (dictionary[count - 1].ContainsKey(word))
+                        {
+                            d = dictionary[count - 1][word];
+                        }
+                        else
+                        {
+                            d = new KoreanSentimentData(word);
+                        }
+                        List<string> instance = polarity.GetRow(i);
+                        if (instance[0] != str)
+                        {
+                            Console.WriteLine("Error in instance");
+                            Console.WriteLine(instance[0] + " / " + str);
+                            Console.ReadKey();
+                        }
+                        freq = int.Parse(instance[1]);
+                        d.freq += freq;
+                        d.pComp += (int)Math.Round(float.Parse(instance[2]) * freq);
+                        d.pNeg += (int)Math.Round(float.Parse(instance[3]) * freq);
+                        d.pNeut += (int)Math.Round(float.Parse(instance[4]) * freq);
+                        d.pNone += (int)Math.Round(float.Parse(instance[5]) * freq);
+                        d.pPos += (int)Math.Round(float.Parse(instance[6]) * freq);
+
+                        if (!dictionary[count - 1].ContainsKey(word))
+                        {
+                            dictionary[count - 1].Add(word, d);
+                        }
+                    }
+                }
+                i++;
+            }
+            Console.WriteLine("(1/" + (4 + NUM_OF_GRAMS) + ") polarity.csv analysis completed");
         }
     }
 
@@ -1219,7 +1285,7 @@ namespace MorphemeParser
         }
     }
 
-    class SentimentData
+    class KoreanSentimentData
     {
         public string word;
         public int freq;
@@ -1512,7 +1578,222 @@ namespace MorphemeParser
             }
         }
 
-        public SentimentData(string word)
+        public KoreanSentimentData(string word)
+        {
+            this.word = word;
+            freq = 0;
+            pComp = 0;
+            pNeg = 0;
+            pNeut = 0;
+            pNone = 0;
+            pPos = 0;
+            iHigh = 0;
+            iLow = 0;
+            iMedium = 0;
+            iNone = 0;
+            stAgreement = 0;
+            stArgument = 0;
+            stEmotion = 0;
+            stIntention = 0;
+            stJudgment = 0;
+            stOthers = 0;
+            stSpeculation = 0;
+            spComp = 0;
+            spNeg = 0;
+            spNeut = 0;
+            spPos = 0;
+        }
+    }
+
+    class EnglishSentimentData
+    {
+        public string word;
+        public int freq;
+        public int positiv;
+        public int negativ;
+        public int ovrst;
+        public int undrst;
+        public int pleasur;
+        public int pain;
+        public int feel;
+        public int arousal;
+        public int emot;
+        public int virtue;
+        public int vice;
+        public int affil;
+        public int hostile;
+        public int active;
+        public int passive;
+
+        public enum ValenceMax { Neutral, Positive, Negative, Complex, NULL };
+        public enum StateIntensityMax { Normal, Overstated, Understated, NULL };
+        public enum EmotionMax { Neutral, Pleasure, Pain, Complex, NULL };
+        public enum JudgmentMax { Virtue, Vice, Complex, NULL };
+        public enum AgreementMax { Affiliation, Hostility, Complex, NULL };
+        public enum IntentionMax { Active, Passive, Complex, NULL };
+
+        public ValenceMax Valence
+        {
+            get
+            {
+                if (positiv == 0 && negativ == 0)
+                {
+                    return ValenceMax.Neutral;
+                }
+                else if (positiv > negativ)
+                {
+                    return ValenceMax.Positive;
+                }
+                else if (positiv < negativ)
+                {
+                    return ValenceMax.Negative;
+                }
+                else if (positiv == negativ && positiv > 0)
+                {
+                    return ValenceMax.Complex;
+                }
+                else
+                {
+                    Console.WriteLine("Error in Valence");
+                    Console.ReadKey();
+                    return ValenceMax.NULL;
+                }
+            }
+        }
+
+        public StateIntensityMax StateIntensity
+        {
+            get
+            {
+                if (ovrst == 0 && undrst == 0)
+                {
+                    return StateIntensityMax.Normal;
+                }
+                else if (ovrst > undrst)
+                {
+                    return StateIntensityMax.Overstated;
+                }
+                else if (ovrst < undrst)
+                {
+                    return StateIntensityMax.Understated;
+                }
+                else if (ovrst == undrst && ovrst > 0)
+                {
+                    return StateIntensityMax.Normal;
+                }
+                else
+                {
+                    Console.WriteLine("Error in StateIntensity");
+                    Console.ReadKey();
+                    return StateIntensityMax.NULL;
+                }
+            }
+        }
+
+        public EmotionMax Emotion
+        {
+            get
+            {
+                int[] p = new int[] { pleasur, pain, feel, arousal, emot };
+                int max = -1;
+                List<int> maxIndex = new List<int>();
+                for (int i = 0; i < 5; i++)
+                {
+                    if (p[i] > max)
+                    {
+                        max = p[i];
+                        maxIndex = new List<int>();
+                        maxIndex.Add(i);
+                    }
+                    else if (p[i] == max)
+                    {
+                        maxIndex.Add(i);
+                    }
+                }
+
+                if (maxIndex.Count == 1)
+                {
+                    switch (maxIndex[0])
+                    {
+                        case 0:
+                            return EmotionMax.Pleasure;
+                        case 1:
+                            return EmotionMax.Pain;
+                        case 2: 
+                        case 3:
+                        case 4:
+                            return EmotionMax.Neutral;
+                        default:
+                            return EmotionMax.NULL;
+                    }
+                }
+                else if (maxIndex.Count > 1)
+                {
+                    // multiple argmax
+                    if (max == 0)
+                    {
+                        return EmotionMax.NULL;
+                    }
+                    else if (maxIndex.Contains(0) && maxIndex.Contains(1))
+                    {
+                        // Pleasure && Pain
+                        return EmotionMax.Complex;
+                    }
+                    else if (maxIndex.Contains(0))
+                    {
+                        // Pleasure
+                        return EmotionMax.Pleasure;
+                    }
+                    else if (maxIndex.Contains(1))
+                    {
+                        // Pain
+                        return EmotionMax.Pain;
+                    }
+                    else
+                    {
+                        // Neutral
+                        return EmotionMax.Neutral;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error in Emotion");
+                    Console.ReadKey();
+                    return EmotionMax.NULL;
+                }
+            }
+        }
+
+        public JudgmentMax Judgment
+        {
+            get
+            {
+                if (virtue == 0 && vice == 0)
+                {
+                    return JudgmentMax.NULL;
+                }
+                else if (virtue > vice)
+                {
+                    return JudgmentMax.Virtue;
+                }
+                else if (virtue < vice)
+                {
+                    return JudgmentMax.Vice;
+                }
+                else if (virtue == vice && virtue > 0)
+                {
+                    return JudgmentMax.Complex;
+                }
+                else
+                {
+                    Console.WriteLine("Error in Judgment");
+                    Console.ReadKey();
+                    return JudgmentMax.NULL;
+                }
+            }
+        }
+
+        public KoreanSentimentData(string word)
         {
             this.word = word;
             freq = 0;

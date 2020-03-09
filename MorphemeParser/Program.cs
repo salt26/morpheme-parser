@@ -12,7 +12,8 @@ namespace MorphemeParser
     {
         static void Main(string[] args)
         {
-            Korean();
+            // Korean();
+            English();
         }
 
         static void Korean()
@@ -300,61 +301,107 @@ namespace MorphemeParser
         {
             Console.WriteLine("Start processing...\n");
             
-            List<Dictionary<string, KoreanSentimentData>> dictionary = new List<Dictionary<string, KoreanSentimentData>>();
-            for (int z = 0; z < NUM_OF_GRAMS; z++)
-            {
-                dictionary.Add(new Dictionary<string, KoreanSentimentData>());
-            }
+            Dictionary<string, EnglishSentimentData> dictionary = new Dictionary<string, EnglishSentimentData>();
 
-            CSVReader polarity = new CSVReader("../../polarity.csv", true);
+            CSVReader inquirer = new CSVReader("../../inquirerbasic.csv", true);
             int i = 0;
-            int freq = 0;
-            foreach (string str in polarity.GetColumn(0))
+            foreach (string str in inquirer.GetColumn(0))
             {
-                if (CheckPOS(str) && !CheckPOSJosa(str) && !CheckPOSEomiNotInLastPosition(str))
+                int index = str.IndexOf('#');
+                string s = str;
+                if (index != -1)
                 {
-                    string a = Hangul.Assemble(str, out bool hasContainSolo, true);
-                    a = TwitterKoreanProcessorCS.Normalize(a);
-                    var b = TwitterKoreanProcessorCS.Tokenize(a);
-                    b = TwitterKoreanProcessorCS.Stem(b);
-                    var c = TwitterKoreanProcessorCS.TokensToStrings(b);
-                    int count = c.Count();
-                    if (count <= NUM_OF_GRAMS && !hasContainSolo)
-                    {
-                        string word = String.Join(";", c.ToArray());
-                        KoreanSentimentData d;
-                        if (dictionary[count - 1].ContainsKey(word))
-                        {
-                            d = dictionary[count - 1][word];
-                        }
-                        else
-                        {
-                            d = new KoreanSentimentData(word);
-                        }
-                        List<string> instance = polarity.GetRow(i);
-                        if (instance[0] != str)
-                        {
-                            Console.WriteLine("Error in instance");
-                            Console.WriteLine(instance[0] + " / " + str);
-                            Console.ReadKey();
-                        }
-                        freq = int.Parse(instance[1]);
-                        d.freq += freq;
-                        d.pComp += (int)Math.Round(float.Parse(instance[2]) * freq);
-                        d.pNeg += (int)Math.Round(float.Parse(instance[3]) * freq);
-                        d.pNeut += (int)Math.Round(float.Parse(instance[4]) * freq);
-                        d.pNone += (int)Math.Round(float.Parse(instance[5]) * freq);
-                        d.pPos += (int)Math.Round(float.Parse(instance[6]) * freq);
+                    s = str.Substring(0, index);
+                }
+                s = s.ToLowerInvariant();
+                EnglishSentimentData d;
+                if (dictionary.ContainsKey(s))
+                {
+                    d = dictionary[s];
+                }
+                else
+                {
+                    d = new EnglishSentimentData(s);
+                }
+                List<string> instance = inquirer.GetRow(i);
+                if (instance[0] != str)
+                {
+                    Console.WriteLine("Error in instance");
+                    Console.WriteLine(instance[0] + " / " + str);
+                    Console.ReadKey();
+                }
+                d.freq++;
+                d.positiv += instance[2].Length > 0 ? 1 : 0;
+                if (instance[2].Length > 0 && instance[2] != "Positiv") Console.WriteLine("Error!");
 
-                        if (!dictionary[count - 1].ContainsKey(word))
-                        {
-                            dictionary[count - 1].Add(word, d);
-                        }
-                    }
+                d.negativ += instance[3].Length > 0 ? 1 : 0;
+                if (instance[3].Length > 0 && instance[3] != "Negativ") Console.WriteLine("Error!");
+
+                d.ovrst += instance[21].Length > 0 ? 1 : 0;
+                if (instance[21].Length > 0 && instance[21] != "Ovrst") Console.WriteLine("Error!");
+
+                d.undrst += instance[22].Length > 0 ? 1 : 0;
+                if (instance[22].Length > 0 && instance[22] != "Undrst") Console.WriteLine("Error!");
+
+                d.pleasur += instance[14].Length > 0 ? 1 : 0;
+                if (instance[14].Length > 0 && instance[14] != "Pleasur") Console.WriteLine("Error!");
+
+                d.pain += instance[15].Length > 0 ? 1 : 0;
+                if (instance[15].Length > 0 && instance[15] != "Pain") Console.WriteLine("Error!");
+
+                d.feel += instance[16].Length > 0 ? 1 : 0;
+                if (instance[16].Length > 0 && instance[16] != "Feel") Console.WriteLine("Error!");
+
+                d.arousal += instance[17].Length > 0 ? 1 : 0;
+                if (instance[17].Length > 0 && instance[17] != "Arousal") Console.WriteLine("Error!");
+
+                d.emot += instance[18].Length > 0 ? 1 : 0;
+                if (instance[18].Length > 0 && instance[18] != "EMOT") Console.WriteLine("Error!");
+
+                d.virtue += instance[19].Length > 0 ? 1 : 0;
+                if (instance[19].Length > 0 && instance[19] != "Virtue") Console.WriteLine("Error!");
+
+                d.vice += instance[20].Length > 0 ? 1 : 0;
+                if (instance[20].Length > 0 && instance[20] != "Vice") Console.WriteLine("Error!");
+
+                d.affil += instance[5].Length > 0 ? 1 : 0;
+                if (instance[5].Length > 0 && instance[5] != "Affil") Console.WriteLine("Error!");
+
+                d.hostile += instance[7].Length > 0 ? 1 : 0;
+                if (instance[7].Length > 0 && instance[7] != "Hostile") Console.WriteLine("Error!");
+
+                d.active += instance[12].Length > 0 ? 1 : 0;
+                if (instance[12].Length > 0 && instance[12] != "Active") Console.WriteLine("Error!");
+
+                d.passive += instance[13].Length > 0 ? 1 : 0;
+                if (instance[13].Length > 0 && instance[13] != "Passive") Console.WriteLine("Error!");
+
+                if (!dictionary.ContainsKey(s))
+                {
+                    dictionary.Add(s, d);
                 }
                 i++;
             }
-            Console.WriteLine("(1/" + (4 + NUM_OF_GRAMS) + ") polarity.csv analysis completed");
+            Console.WriteLine("(1/2) inquirerbasic.csv analysis completed");
+
+            using (var w = new StreamWriter("EnglishSentiment.csv"))
+            {
+                string header = "Word,Valence,StateIntensity,Emotion,Judgment,Agreement,Intention";
+                w.WriteLine(header);
+                w.Flush();
+                string line = "";
+                foreach (var e in dictionary)
+                {
+                    line = $"{e.Value.word},{e.Value.Valence},{e.Value.StateIntensity},{e.Value.Emotion},{e.Value.Judgment},{e.Value.Agreement},{e.Value.Intention}";
+                    w.WriteLine(line);
+                    w.Flush();
+                }
+            }
+            Console.WriteLine("(2/2) EnglishSentiment.csv exporting completed");
+
+            Console.WriteLine();
+            Console.WriteLine("Press any key to terminate.");
+            Console.ReadKey();
         }
     }
 
@@ -1793,30 +1840,83 @@ namespace MorphemeParser
             }
         }
 
-        public KoreanSentimentData(string word)
+        public AgreementMax Agreement
+        {
+            get
+            {
+                if (affil == 0 && hostile == 0)
+                {
+                    return AgreementMax.NULL;
+                }
+                else if (affil > hostile)
+                {
+                    return AgreementMax.Affiliation;
+                }
+                else if (affil < hostile)
+                {
+                    return AgreementMax.Hostility;
+                }
+                else if (affil == hostile && affil > 0)
+                {
+                    return AgreementMax.Complex;
+                }
+                else
+                {
+                    Console.WriteLine("Error in Agreement");
+                    Console.ReadKey();
+                    return AgreementMax.NULL;
+                }
+            }
+        }
+
+        public IntentionMax Intention
+        {
+            get
+            {
+                if (active == 0 && passive == 0)
+                {
+                    return IntentionMax.NULL;
+                }
+                else if (active > passive)
+                {
+                    return IntentionMax.Active;
+                }
+                else if (active < passive)
+                {
+                    return IntentionMax.Passive;
+                }
+                else if (active == passive && active > 0)
+                {
+                    return IntentionMax.Complex;
+                }
+                else
+                {
+                    Console.WriteLine("Error in Intention");
+                    Console.ReadKey();
+                    return IntentionMax.NULL;
+                }
+            }
+        }
+
+        public EnglishSentimentData(string word)
         {
             this.word = word;
             freq = 0;
-            pComp = 0;
-            pNeg = 0;
-            pNeut = 0;
-            pNone = 0;
-            pPos = 0;
-            iHigh = 0;
-            iLow = 0;
-            iMedium = 0;
-            iNone = 0;
-            stAgreement = 0;
-            stArgument = 0;
-            stEmotion = 0;
-            stIntention = 0;
-            stJudgment = 0;
-            stOthers = 0;
-            stSpeculation = 0;
-            spComp = 0;
-            spNeg = 0;
-            spNeut = 0;
-            spPos = 0;
+            positiv = 0;
+            negativ = 0;
+            ovrst = 0;
+            undrst = 0;
+            pleasur = 0;
+            pain = 0;
+            feel = 0;
+            arousal = 0;
+            emot = 0;
+            virtue = 0;
+            vice = 0;
+            affil = 0;
+            hostile = 0;
+            active = 0;
+            passive = 0;
         }
     }
 }

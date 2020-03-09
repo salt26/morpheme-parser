@@ -127,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="inquirerbasic.csv" />
     <None Include="intensity.csv" />
     <None Include="packages.config" />
     <None Include="polarity.csv" />

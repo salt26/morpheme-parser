@@ -302,6 +302,33 @@ namespace MorphemeParser
             Console.WriteLine("Start processing...\n");
             
             Dictionary<string, EnglishSentimentData> dictionary = new Dictionary<string, EnglishSentimentData>();
+            Dictionary<string, long> freqDict = new Dictionary<string, long>(100000);
+
+            CSVReader frequency = new CSVReader("../../frequency_dictionary_en_82_765.txt", false, ' ');
+            int l = frequency.GetColumn(0).Count;
+            for (int j = 0; j < l; j++)
+            {
+                List<string> instance = frequency.GetRow(j);
+                if (instance.Count != 2) continue;
+                string str = instance[0];
+                long freq;
+                if (!long.TryParse(instance[1], out freq))
+                {
+                    freq = 0;
+                }
+
+                if (freqDict.ContainsKey(str))
+                {
+                    Console.WriteLine("Error in frequency: multiple keys");
+                    Console.WriteLine(str);
+                    Console.ReadKey();
+                }
+                else
+                {
+                    freqDict.Add(str, freq);
+                }
+            }
+            Console.WriteLine("(1/4) frequency_dictionary_en_82_765.txt analysis completed");
 
             CSVReader inquirer = new CSVReader("../../inquirerbasic.csv", true);
             int i = 0;
@@ -313,6 +340,7 @@ namespace MorphemeParser
                 {
                     s = str.Substring(0, index);
                 }
+                s = s.Trim('>');
                 s = s.ToLowerInvariant();
                 EnglishSentimentData d;
                 if (dictionary.ContainsKey(s))
@@ -326,7 +354,7 @@ namespace MorphemeParser
                 List<string> instance = inquirer.GetRow(i);
                 if (instance[0] != str)
                 {
-                    Console.WriteLine("Error in instance");
+                    Console.WriteLine("Error in inquirer instance");
                     Console.WriteLine(instance[0] + " / " + str);
                     Console.ReadKey();
                 }
@@ -380,9 +408,15 @@ namespace MorphemeParser
                 {
                     dictionary.Add(s, d);
                 }
+
+                if (!freqDict.ContainsKey(s))
+                {
+                    //Console.WriteLine(s + " excluded in freqDict");
+                    freqDict.Add(s, 300000);
+                }
                 i++;
             }
-            Console.WriteLine("(1/2) inquirerbasic.csv analysis completed");
+            Console.WriteLine("(2/4) inquirerbasic.csv analysis completed");
 
             using (var w = new StreamWriter("EnglishSentiment.csv"))
             {
@@ -397,7 +431,19 @@ namespace MorphemeParser
                     w.Flush();
                 }
             }
-            Console.WriteLine("(2/2) EnglishSentiment.csv exporting completed");
+            Console.WriteLine("(3/4) EnglishSentiment.csv exporting completed");
+
+            using (var w = new StreamWriter("EnglishFrequencyDictionary.txt"))
+            {
+                string line = "";
+                foreach (var e in freqDict)
+                {
+                    line = $"{e.Key} {e.Value}";
+                    w.WriteLine(line);
+                    w.Flush();
+                }
+            }
+            Console.WriteLine("(4/4) EnglishFrequencyDictionary.txt exporting completed");
 
             Console.WriteLine();
             Console.WriteLine("Press any key to terminate.");

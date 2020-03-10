@@ -134,5 +134,8 @@
     <None Include="subjectivity-polarity.csv" />
     <None Include="subjectivity-type.csv" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="frequency_dictionary_en_82_765.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

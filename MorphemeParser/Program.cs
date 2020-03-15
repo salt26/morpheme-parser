@@ -340,8 +340,9 @@ namespace MorphemeParser
                 {
                     s = str.Substring(0, index);
                 }
-                s = s.Trim('>');
+                s = s.Trim('>', '.');
                 s = s.ToLowerInvariant();
+
                 EnglishSentimentData d;
                 if (dictionary.ContainsKey(s))
                 {
@@ -415,6 +416,15 @@ namespace MorphemeParser
                     freqDict.Add(s, 300000);
                 }
                 i++;
+            }
+
+            if (!dictionary.ContainsKey("chordingcoding"))
+            {
+                dictionary.Add("chordingcoding", new EnglishSentimentData("chordingcoding") { positiv = 1 });
+            }
+            if (!freqDict.ContainsKey("chordingcoding"))
+            {
+                freqDict.Add("chordingcoding", 300000);
             }
             Console.WriteLine("(2/4) inquirerbasic.csv analysis completed");
 
